@@ -1,13 +1,21 @@
-﻿# CMakeList.txt : CMake project for CMakeProject1, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required(VERSION 3.10)
 
-project ("CMakeProject1")
+# Nazwa Twojego projektu
+project(CMakeProject1)
 
-# Add source to this project's executable.
-add_executable (CMakeProject1 "CMakeProject1.cpp" "CMakeProject1.h" "Token.h")
+# Szukamy pakietów zainstalowanych przez vcpkg
+find_package(dpp REQUIRED)
+find_package(unofficial-libmysql CONFIG REQUIRED)
 
-# TODO: Add tests and install targets if needed.
-	find_package(dpp CONFIG REQUIRED)
-	target_link_libraries(${PROJECT_NAME} PRIVATE dpp::dpp)
+# DODAWANIE PLIKÓW: Tutaj musisz podać wszystkie pliki .cpp, które bierzesz do projektu
+# Upewnij się, że nazwa głównego pliku to na pewno CMakeProject1.cpp!
+add_executable(CMakeProject1 
+    CMakeProject1.cpp 
+    sql_functions.cpp
+)
+
+# Łączenie bibliotek z Twoim programem
+target_link_libraries(CMakeProject1 PRIVATE 
+    dpp::dpp
+    unofficial::libmysql::libmysql
+)

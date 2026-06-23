@@ -1,7 +1,12 @@
 ﻿#include <dpp/dpp.h>
+#include <mysql/mysql.h>
 #include "Token.h"
 
 
+
+std::string connect(std::function<std::string(MYSQL*)> funkcja);
+void connectVoid(std::function<void(MYSQL*)> funkcja);
+void addteam(MYSQL* conn, const std::string& team_name, const std::string& server_id);
 struct Fuel
 {
 	float number_laps;
@@ -173,18 +178,23 @@ int main() {
 		}
 		
 		
-		if (event.command.get_command_name() == "dm") {
+		if (event.command.get_command_name() == "dodaj-team") {
+			std::string nazwa_temu = std::get<std::string>( event.get_parameter("nazwa_teamu"));
+			std::string server_id = std::to_string(event.command.guild_id);
 
-			dpp::snowflake user;
-
-			if (event.get_parameter("user").index() == 0) {
-				user = event.command.get_issuing_user().id;
+			try {
+				connectVoid([nazwa_temu, server_id](MYSQL* conn){ addteam(conn, nazwa_temu, server_id); });
+				event.reply("udalo sie dodac team");
 			}
-			else {
-				user = std::get<dpp::snowflake>(event.get_parameter("user"));
+			catch (const char* error) {
+				if (error = "Team_exist") {
+					event.reply("team o takiej nazwie istnieje!");
+				}
+				else {
+					event.reply("nie udalo sie dodac teamu");
+				}
 			}
-
-			bot.direct_message_create(user, dpp::message("czesc c-wordzie!"));
+			
 
 			
 
@@ -200,7 +210,7 @@ int main() {
 		if (dpp::run_once<struct register_bot_commands>()) {
 
 			std::vector<dpp::slashcommand> commands;
-			
+			//kalkulator paliwa
 			dpp::slashcommand calculator("kalkulator-paliwa", "Kalkulator Paliwa", bot.me.id);
 			calculator.add_option(dpp::command_option(dpp::co_integer, "length", "dlugosc wyscigu(min)", true));
 			calculator.add_option(dpp::command_option(dpp::co_string, "lap_time", "dlugosc okrazania(x.xx.xxx)", true));
@@ -211,6 +221,12 @@ int main() {
 			
 			commands.push_back(calculator);
 			
+			//dodawanie teamu
+			dpp::slashcommand dodaj_team("dodaj-team", "dodaje druzyne do bazy danych", bot.me.id);
+			dodaj_team.add_option(dpp::command_option(dpp::co_string, "nazwa_teamu", "napisz nazwe teamu", true));
+
+			commands.push_back(dodaj_team);
+
 			commands.push_back(dpp::slashcommand("porownaj-czas", "Porownuje czas z czasami esportowcow", bot.me.id));
 			
 			dpp::slashcommand dm("dm", "dm", bot.me.id);
